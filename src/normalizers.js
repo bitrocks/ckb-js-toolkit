@@ -13,7 +13,7 @@
 import JSBI from "jsbi";
 import { Reader } from "./reader";
 import { BigIntToHexString } from "./rpc";
-
+import { blockchain } from "ckb-js-toolkit-contrib"
 function normalizeHexNumber(length) {
   return function(debugPath, value) {
     if (!(value instanceof ArrayBuffer)) {
@@ -265,4 +265,65 @@ export function NormalizeWitnessArgs(
     );
   }
   return result;
+}
+
+// Godwoken data structure
+export function NormalizeSyncParam(
+    syncParam,
+    { debugPath = "sync_param" } = {}
+) {
+    return normalizeObject(debugPath, syncParam, {
+        reverts: toNormalizeArray(toNormalize(NormalizeL1Action)),
+        updates: toNormalizeArray(toNormalize(NormalizeL1Action)),
+        next_block_context: NormalizeNextBlockContext()
+    });
+}
+
+export function NormalizeNextBlockContext(
+    nextBlockContext,
+    { debugPath = "next_block_context" } = {}
+) {
+    return normalizeObject(debugPath, nextBlockContext, {
+        aggregator_id: normalizeHexNumber(4),
+        timestamp: normalizeHexNumber(8)
+    })
+}
+
+export function NormalizeL1Action(
+    l1Action,
+    { debugPath = "l1_action" } = {}
+) {
+    return normalizeObject(debugPath, l1Action, {
+        transaction_info: NormalizeTransactionInfo(),
+        header_info: NormalizeHeaderInfo(),
+        context: NormalizeL1ActionContext()
+    });
+}
+
+export function NormalizeTransactionInfo(
+    transactionInfo,
+    { debugPath = "transaction_info" } = {}
+) {
+    return normalizeObject(debugPath, transactionInfo, {
+        transaction: blockchain.SerializeTransaction(NormalizeTransaction()),
+        block_hash: normalizeRawData(32)
+    });
+}
+
+export function NormalizeHeaderInfo(
+    headerInfo,
+    { debugPath = "header_info" } = {}
+) {
+    return normalizeObject(debugPath, headerInfo, {
+        number: normalizeHexNumber(8),
+        block_hash: normalizeRawData(32)
+    });
+}
+
+export function NormalizeL1ActionContext(
+    l1ActionContext,
+    { debugPath = "l1_action_context" } = {}
+) {
+    return normalizeObject(debugPath, l1ActionContext, {
+    });
 }
